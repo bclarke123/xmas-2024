@@ -7,24 +7,24 @@
 use bsp::entry;
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::digital::OutputPin;
+use display_interface_spi::SPIInterface;
+use embedded_hal::{digital::OutputPin, spi::MODE_0};
+use mipidsi::{models::ST7789, Builder};
 use panic_probe as _;
 
 // Provide an alias for our BSP so we can switch targets quickly.
 // Uncomment the BSP you included in Cargo.toml, the rest of the code does not need to change.
 use adafruit_feather_rp2040 as bsp;
-// use sparkfun_pro_micro_rp2040 as bsp;
 
 use bsp::hal::{
     clocks::{init_clocks_and_plls, Clock},
+    fugit::RateExtU32,
+    gpio::FunctionSpi,
     pac,
     sio::Sio,
     watchdog::Watchdog,
+    Spi,
 };
-
-const RST_PIN: u8 = 26;
-const DC_PIN: u8 = 27;
-const BL_PIN: u8 = 28;
 
 #[entry]
 fn main() -> ! {
@@ -57,6 +57,20 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
+    let sclk = pins.sclk.into_function::<FunctionSpi>();
+    let mosi = pins.mosi.into_function::<FunctionSpi>();
+    let dc = pins.a1.into_push_pull_output();
+
+    let spi_device = pac.SPI0;
+    let spi_pin_layout = (mosi, sclk);
+
+    let spi = Spi::<_, _, _, 8>::new(spi_device, spi_pin_layout).init(
+        &mut pac.RESETS,
+        125_000_000u32.Hz(),
+        16_000_000u32.Hz(),
+        MODE_0,
+    );
+
     // This is the correct pin on the Raspberry Pico board. On other boards, even if they have an
     // on-board LED, it might need to be changed.
     //
@@ -68,6 +82,13 @@ fn main() -> ! {
     // in series with the LED.
     // let mut led_pin = pins.led.into_push_pull_output();
     let mut led_pin = pins.d13.into_push_pull_output();
+
+    // SPI Display
+    // let mut display = Builder::new(ST7789, di)
+    //     .display_size(W as u16, H as u16)
+    //     .invert_colors(ColorInversion::Inverted)
+    //     .init(&mut delay)
+    //     .unwrap();
 
     loop {
         info!("on!");

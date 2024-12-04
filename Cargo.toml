@@ -18,13 +18,10 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 mipidsi = "0.8.0"
 adafruit-feather-rp2040 = "0.8.0"
 embedded-graphics = "0.8.1"
+display-interface-spi = "0.5.0"
 
-# but you can use any BSP. Uncomment this to use the pro_micro_rp2040 BSP instead
-# sparkfun-pro-micro-rp2040 = "0.8"
-
-# If you're not going to use a Board Support Package you'll need these:
-# rp2040-hal = { version="0.10", features=["rt", "critical-section-impl"] }
-# rp2040-boot2 = "0.3"
+[patch.crates-io]
+bytes = { git = "https://github.com/taiki-e/bytes", branch = "cfg_target_has_atomic" }
 
 # cargo build/run
 [profile.dev]
